@@ -53,7 +53,7 @@ import static io.seata.core.exception.TransactionExceptionCode.BranchRollbackFai
 /**
  * @author jsbxyyx
  */
-public abstract class AbstractUndoLogManager implements UndoLogManager {
+public abstract class AbstractUndoLogManager<ExecuteTemplate> implements UndoLogManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractUndoLogManager.class);
 

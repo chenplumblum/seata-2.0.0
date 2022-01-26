@@ -119,6 +119,9 @@ public class TransactionalTemplate {
             try {
                 // 2. If the tx role is 'GlobalTransactionRole.Launcher', send the request of beginTransaction to TC,
                 //    else do nothing. Of course, the hooks will still be triggered.
+                /**
+                 * 开启事务
+                 */
                 beginTransaction(txInfo, tx);
 
                 Object rs;

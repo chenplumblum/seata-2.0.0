@@ -156,6 +156,7 @@ public class GlobalTransactionalInterceptor implements ConfigurationChangeListen
             boolean localDisable = disable || (degradeCheck && degradeNum >= degradeCheckAllowTimes);
             if (!localDisable) {
                 if (globalTransactionalAnnotation != null || this.aspectTransactional != null) {
+                    // 全局事务注解
                     AspectTransactional transactional;
                     if (globalTransactionalAnnotation != null) {
                         transactional = new AspectTransactional(globalTransactionalAnnotation.timeoutMills(),
@@ -171,6 +172,7 @@ public class GlobalTransactionalInterceptor implements ConfigurationChangeListen
                     }
                     return handleGlobalTransaction(methodInvocation, transactional);
                 } else if (globalLockAnnotation != null) {
+                    // 全局锁注解
                     return handleGlobalLock(methodInvocation, globalLockAnnotation);
                 }
             }

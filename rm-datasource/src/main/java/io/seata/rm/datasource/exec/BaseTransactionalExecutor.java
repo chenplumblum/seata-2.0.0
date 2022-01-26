@@ -117,10 +117,15 @@ public abstract class BaseTransactionalExecutor<T, S extends Statement> implemen
     @Override
     public T execute(Object... args) throws Throwable {
         String xid = RootContext.getXID();
+        /**
+         * 处于全局事务，绑定xid
+         */
         if (xid != null) {
             statementProxy.getConnectionProxy().bind(xid);
         }
-
+        /**
+         * 设置全局锁
+         */
         statementProxy.getConnectionProxy().setGlobalLockRequire(RootContext.requireGlobalLock());
         return doExecute(args);
     }

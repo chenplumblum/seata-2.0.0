@@ -70,11 +70,18 @@ public class ExecuteTemplate {
                                                      StatementProxy<S> statementProxy,
                                                      StatementCallback<T, S> statementCallback,
                                                      Object... args) throws SQLException {
+        /**
+         * 1. 不处于全局事务中，既没有xid 或者没有GlobalLock修饰
+         * 2. 是否为at事件
+         *
+         */
         if (!RootContext.requireGlobalLock() && BranchType.AT != RootContext.getBranchType()) {
             // Just work as original statement
             return statementCallback.execute(statementProxy.getTargetStatement(), args);
         }
-
+        /**
+         * 获取数据源类型
+         */
         String dbType = statementProxy.getConnectionProxy().getDbType();
         if (CollectionUtils.isEmpty(sqlRecognizers)) {
             sqlRecognizers = SQLVisitorFactory.get(
@@ -87,6 +94,9 @@ public class ExecuteTemplate {
         } else {
             if (sqlRecognizers.size() == 1) {
                 SQLRecognizer sqlRecognizer = sqlRecognizers.get(0);
+                /**
+                 * 通过sql类型生成不同执行型器
+                 */
                 switch (sqlRecognizer.getSQLType()) {
                     case INSERT:
                         executor = EnhancedServiceLoader.load(InsertExecutor.class, dbType,

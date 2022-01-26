@@ -79,6 +79,7 @@ public abstract class AbstractDMLBaseExecutor<T, S extends Statement> extends Ba
     public T doExecute(Object... args) throws Throwable {
         AbstractConnectionProxy connectionProxy = statementProxy.getConnectionProxy();
         if (connectionProxy.getAutoCommit()) {
+            //一个无限循环，这么做的意义是，一旦分支注册时抛出锁冲突异常，则需要一直等待直到别的全局事务释放该全局锁之后才能提交自己的修改，否则一直阻塞等待。
             return executeAutoCommitTrue(args);
         } else {
             return executeAutoCommitFalse(args);
@@ -99,6 +100,7 @@ public abstract class AbstractDMLBaseExecutor<T, S extends Statement> extends Ba
         TableRecords beforeImage = beforeImage();
         T result = statementCallback.execute(statementProxy.getTargetStatement(), args);
         TableRecords afterImage = afterImage(beforeImage);
+        //生成undo日志
         prepareUndoLog(beforeImage, afterImage);
         return result;
     }
@@ -138,6 +140,7 @@ public abstract class AbstractDMLBaseExecutor<T, S extends Statement> extends Ba
             connectionProxy.changeAutoCommit();
             return new LockRetryPolicy(connectionProxy).execute(() -> {
                 T result = executeAutoCommitFalse(args);
+                //提交成功则提交本地事务。
                 connectionProxy.commit();
                 return result;
             });
@@ -145,6 +148,7 @@ public abstract class AbstractDMLBaseExecutor<T, S extends Statement> extends Ba
             // when exception occur in finally,this exception will lost, so just print it here
             LOGGER.error("execute executeAutoCommitTrue error:{}", e.getMessage(), e);
             if (!LockRetryPolicy.isLockRetryPolicyBranchRollbackOnConflict()) {
+                //如果不是锁冲突则进行回滚。
                 connectionProxy.getTargetConnection().rollback();
             }
             throw e;

@@ -175,6 +175,9 @@ public final class TmNettyRemotingClient extends AbstractNettyRemotingClient {
     @Override
     public void init() {
         // registry processor
+        /**
+         * 注册tm
+         */
         registerProcessor();
         if (initialized.compareAndSet(false, true)) {
             super.init();

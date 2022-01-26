@@ -226,8 +226,10 @@ public class ConnectionProxy extends AbstractConnectionProxy {
 
 
     private void doCommit() throws SQLException {
+        //针对分支事务处理
         if (context.inGlobalTransaction()) {
             processGlobalTransactionCommit();
+            //针对GlobalLock处理
         } else if (context.isGlobalLockRequire()) {
             processLocalCommitWithGlobalLocks();
         } else {
@@ -247,18 +249,25 @@ public class ConnectionProxy extends AbstractConnectionProxy {
 
     private void processGlobalTransactionCommit() throws SQLException {
         try {
+            /**
+             * 1。调用RM注册分支事务，包括行记录的主键作为全局锁
+             */
             register();
         } catch (TransactionException e) {
             recognizeLockKeyConflictException(e, context.buildLockKeys());
         }
         try {
+            //分支注册成功，将undoLog 插入数据库
             UndoLogManagerFactory.getUndoLogManager(this.getDbType()).flushUndoLogs(this);
+            //将业务修改和undoLog一并提交
             targetConnection.commit();
         } catch (Throwable ex) {
+            //汇报分支状态为第一阶段时表，默认重试五次
             LOGGER.error("process connectionProxy commit error: {}", ex.getMessage(), ex);
             report(false);
             throw new SQLException(ex);
         }
+        //汇报分支状态为第一阶段成功。
         if (IS_REPORT_SUCCESS_ENABLE) {
             report(true);
         }

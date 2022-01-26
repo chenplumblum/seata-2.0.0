@@ -71,6 +71,10 @@ public final class RmNettyRemotingClient extends AbstractNettyRemotingClient {
     @Override
     public void init() {
         // registry processor
+        /**
+         * 注册
+         * RM 资源管理器，负责分支事务的注册、提交、上报、以及回滚操作，以及全局锁的查询操作
+         */
         registerProcessor();
         if (initialized.compareAndSet(false, true)) {
             super.init();
